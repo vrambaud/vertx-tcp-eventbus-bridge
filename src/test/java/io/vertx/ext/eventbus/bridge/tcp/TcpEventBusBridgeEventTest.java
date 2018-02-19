@@ -23,6 +23,7 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.net.*;
 import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.bridge.PermittedOptions;
+import io.vertx.ext.eventbus.bridge.tcp.impl.MessageBridgeCodecDefaultImpl;
 import io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameHelper;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
@@ -109,9 +110,8 @@ public class TcpEventBusBridgeEventTest {
       context.assertFalse(conn.failed());
 
       NetSocket socket = conn.result();
-
-      FrameHelper.sendFrame("send", "test", new JsonObject().put("value", "vert.x"), socket);
+      FrameHelper<JsonObject> helper = new FrameHelper<JsonObject>(new MessageBridgeCodecDefaultImpl());
+      helper.sendFrame("send", "test", new JsonObject().put("value", "vert.x"), socket);
     });
   }
-
 }

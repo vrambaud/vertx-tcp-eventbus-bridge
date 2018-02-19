@@ -31,6 +31,7 @@ import io.vertx.core.net.NetClient;
 import io.vertx.core.net.NetSocket;
 import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.bridge.PermittedOptions;
+import io.vertx.ext.eventbus.bridge.tcp.impl.MessageBridgeCodecDefaultImpl;
 import io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameHelper;
 import io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameParser;
 import io.vertx.ext.unit.Async;
@@ -41,11 +42,13 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 public class TcpEventBusBridgeTest {
 
   private Vertx vertx;
+  private FrameHelper<JsonObject> helper;
   private volatile Handler<BridgeEvent> eventHandler = event -> event.complete(true);
 
   @Before
   public void before(TestContext context) {
     vertx = Vertx.vertx();
+    helper = new FrameHelper<JsonObject>(new MessageBridgeCodecDefaultImpl());
     final Async async = context.async();
 
     vertx.eventBus().consumer("hello", (Message<JsonObject> msg) -> msg.reply(new JsonObject().put("value", "Hello " + msg.body().getString("value"))));
@@ -90,7 +93,7 @@ public class TcpEventBusBridgeTest {
 
       NetSocket socket = conn.result();
 
-      FrameHelper.sendFrame("send", "test", new JsonObject().put("value", "vert.x"), socket);
+      helper.sendFrame("send", "test", new JsonObject().put("value", "vert.x"), socket);
     });
   }
 
@@ -118,7 +121,7 @@ public class TcpEventBusBridgeTest {
 
       socket.handler(parser);
 
-      FrameHelper.sendFrame("send", "test", "#backtrack", new JsonObject().put("value", "vert.x"), socket);
+      helper.sendFrame("send", "test", "#backtrack", new JsonObject().put("value", "vert.x"), socket);
     });
   }
 
@@ -150,7 +153,7 @@ public class TcpEventBusBridgeTest {
 
       socket.handler(parser);
 
-      FrameHelper.sendFrame("send", "test", "#backtrack", new JsonObject().put("value", "vert.x"), socket);
+      helper.sendFrame("send", "test", "#backtrack", new JsonObject().put("value", "vert.x"), socket);
     });
   }
 
@@ -176,7 +179,7 @@ public class TcpEventBusBridgeTest {
 
       socket.handler(parser);
 
-      FrameHelper.sendFrame("register", "ping", null, socket);
+      helper.sendFrame("register", "ping", null, socket);
     });
 
   }
@@ -204,7 +207,7 @@ public class TcpEventBusBridgeTest {
 
       socket.handler(parser);
 
-      FrameHelper.sendFrame("send", "hello", "#backtrack", new JsonObject().put("value", "vert.x"), socket);
+      helper.sendFrame("send", "hello", "#backtrack", new JsonObject().put("value", "vert.x"), socket);
     });
   }
 
@@ -231,7 +234,7 @@ public class TcpEventBusBridgeTest {
       socket.handler(parser);
 
 
-      FrameHelper.sendFrame("send", "hello", "third-party-receiver", new JsonObject().put("value", "vert.x"), socket);
+      helper.sendFrame("send", "hello", "third-party-receiver", new JsonObject().put("value", "vert.x"), socket);
     });
   }
 
@@ -261,12 +264,12 @@ public class TcpEventBusBridgeTest {
 
       socket.handler(parser);
 
-      FrameHelper.sendFrame("register", "echo", null, socket);
+      helper.sendFrame("register", "echo", null, socket);
 
       // now try to publish a message so it gets delivered both to the consumer registred on the startup and to this
       // remote consumer
 
-      FrameHelper.sendFrame("publish", "echo", new JsonObject().put("value", "Vert.x"), socket);
+      helper.sendFrame("publish", "echo", new JsonObject().put("value", "Vert.x"), socket);
     });
 
   }
@@ -284,8 +287,8 @@ public class TcpEventBusBridgeTest {
       socket.handler(buff -> {
 
       });
-      FrameHelper.sendFrame("register", "echo", null, socket);
-      FrameHelper.sendFrame("ping", socket);
+      helper.sendFrame("register", "echo", null, socket);
+      helper.sendFrame("ping", socket);
     }));
   }
 }

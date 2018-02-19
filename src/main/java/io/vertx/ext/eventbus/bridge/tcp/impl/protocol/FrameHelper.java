@@ -19,6 +19,7 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.streams.WriteStream;
+import io.vertx.ext.eventbus.bridge.tcp.MessageBridgeCodec;
 
 import java.nio.charset.Charset;
 
@@ -26,13 +27,17 @@ import java.nio.charset.Charset;
  * Helper class to format and send frames over a socket
  * @author Paulo Lopes
  */
-public class FrameHelper {
+public class FrameHelper <T> {
 
   private static final Charset UTF8 = Charset.forName("UTF-8");
 
-  private FrameHelper() {}
+  private final MessageBridgeCodec<T> codec;
+  
+  public FrameHelper(MessageBridgeCodec<T> codec) {
+      this.codec = codec;
+  }
 
-  public static void sendFrame(String type, String address, String replyAddress, JsonObject headers, Boolean send, JsonObject body, WriteStream<Buffer> handler) {
+  public void sendFrame(String type, String address, String replyAddress, JsonObject headers, Boolean send, T body, WriteStream<Buffer> handler) {
     final JsonObject payload = new JsonObject().put("type", type);
 
     if (address != null) {
@@ -48,7 +53,8 @@ public class FrameHelper {
     }
 
     if (body != null) {
-      payload.put("body", body);
+        JsonObject bodyObj = new JsonObject(codec.encode(body));
+        payload.put("body", bodyObj);
     }
 
     if (send != null) {
@@ -58,15 +64,15 @@ public class FrameHelper {
     writeFrame(payload, handler);
   }
 
-  public static void sendFrame(String type, String address, String replyAddress, JsonObject body, WriteStream<Buffer> handler) {
+  public void sendFrame(String type, String address, String replyAddress, T body, WriteStream<Buffer> handler) {
     sendFrame(type, address, replyAddress, null, null, body, handler);
   }
 
-  public static void sendFrame(String type, String address, JsonObject body, WriteStream<Buffer> handler) {
+  public void sendFrame(String type, String address, T body, WriteStream<Buffer> handler) {
     sendFrame(type, address, null, null, null, body, handler);
   }
 
-  public static void sendFrame(String type, WriteStream<Buffer> handler) {
+  public void sendFrame(String type, WriteStream<Buffer> handler) {
     sendFrame(type, null, null, null, null, null, handler);
   }
 

@@ -20,8 +20,10 @@ import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetServerOptions;
 import io.vertx.ext.bridge.BridgeOptions;
+import io.vertx.ext.eventbus.bridge.tcp.impl.MessageBridgeCodecDefaultImpl;
 import io.vertx.ext.eventbus.bridge.tcp.impl.TcpEventBusBridgeImpl;
 
 /**
@@ -41,11 +43,13 @@ public interface TcpEventBusBridge {
   }
 
   static TcpEventBusBridge create(Vertx vertx, BridgeOptions options, NetServerOptions netServerOptions) {
-    return new TcpEventBusBridgeImpl(vertx, options, netServerOptions,null);
+    return new TcpEventBusBridgeImpl<JsonObject>(vertx, options, netServerOptions,null, new MessageBridgeCodecDefaultImpl());
   }
+  
   static TcpEventBusBridge create(Vertx vertx, BridgeOptions options, NetServerOptions netServerOptions,Handler<BridgeEvent> eventHandler) {
-    return new TcpEventBusBridgeImpl(vertx, options, netServerOptions,eventHandler);
+    return new TcpEventBusBridgeImpl<JsonObject>(vertx, options, netServerOptions,eventHandler, new MessageBridgeCodecDefaultImpl());
   }
+  
   /**
    * Listen on default port 7000
    *
@@ -108,6 +112,13 @@ public interface TcpEventBusBridge {
   TcpEventBusBridge listen(int port, Handler<AsyncResult<TcpEventBusBridge>> handler);
 
   /**
+   * Get TCP connection port number.
+   * 
+  * @return tcp port number
+  */
+  int actualPort();
+    
+  /**
    * Close the current socket.
    *
    * @param handler the result handler
@@ -117,5 +128,6 @@ public interface TcpEventBusBridge {
   /**
    * Close the current socket.
    */
-  void close();
+  void close(); 
+
 }
